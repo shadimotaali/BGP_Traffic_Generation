@@ -441,7 +441,7 @@ INCIDENTS = {
         'duration_minutes': 1440,
         'impact': '~30,000 routes, global traffic misdirection'
     },
-    
+
     'code_red_ii': {
         'name': 'Code Red II Worm BGP Impact',
         'date': '2001-07-19',
@@ -456,7 +456,7 @@ INCIDENTS = {
         'duration_minutes': 840,
         'impact': 'Global Internet instability'
     },
-    
+
     'nimda_worm': {
         'name': 'Nimda Worm BGP Impact',
         'date': '2001-09-18',
@@ -470,6 +470,258 @@ INCIDENTS = {
         'detection_rule': 'update_burst',
         'duration_minutes': 720,
         'impact': '30× BGP update rate increase'
+    },
+
+    # ========================================================================
+    # ADDITIONAL INCIDENTS (2014-2024)
+    # ========================================================================
+
+    # PREFIX HIJACKING - Additional
+    'orange_spain_2024': {
+        'name': 'Orange Spain RPKI Hijack',
+        'date': '2024-01-03',
+        'start_time': '14:30',
+        'end_time': '18:00',
+        'rrc': 'rrc04',
+        'malicious_as': ['49581'],
+        'hijacked_prefix': [],
+        'label': 'prefix_hijacking',
+        'type': 'PH',
+        'duration_minutes': 210,
+        'impact': 'Orange Spain 50% traffic drop via RPKI misconfiguration'
+    },
+
+    'bitcanal_hijacks_2018': {
+        'name': 'Bitcanal Serial Hijacker',
+        'date': '2018-07-10',
+        'start_time': '00:00',
+        'end_time': '23:59',
+        'rrc': 'rrc04',
+        'malicious_as': ['197426'],
+        'hijacked_prefix': [],
+        'label': 'prefix_hijacking',
+        'type': 'PH',
+        'duration_minutes': 1440,
+        'impact': 'Multiple cryptocurrency and payment targets'
+    },
+
+    'iran_telegram_2018': {
+        'name': 'Iran Telegram BGP Hijack',
+        'date': '2018-07-30',
+        'start_time': '04:00',
+        'end_time': '06:30',
+        'rrc': 'rrc04',
+        'malicious_as': ['58224', '12880'],
+        'hijacked_prefix': ['149.154.160.0/20'],
+        'label': 'prefix_hijacking',
+        'type': 'PH',
+        'duration_minutes': 150,
+        'impact': 'Telegram traffic redirected through Iran'
+    },
+
+    'turk_telekom_2014': {
+        'name': 'Turk Telekom DNS Hijack',
+        'date': '2014-03-29',
+        'start_time': '00:00',
+        'end_time': '12:00',
+        'rrc': 'rrc04',
+        'malicious_as': ['9121'],
+        'hijacked_prefix': ['8.8.8.0/24', '8.8.4.0/24'],
+        'label': 'prefix_hijacking',
+        'type': 'PH',
+        'duration_minutes': 720,
+        'impact': 'Google DNS hijacked in Turkey'
+    },
+
+    'spamhaus_2013': {
+        'name': 'Spamhaus DDoS BGP Amplification',
+        'date': '2013-03-18',
+        'start_time': '10:00',
+        'end_time': '22:00',
+        'rrc': 'rrc04',
+        'malicious_as': [],
+        'hijacked_prefix': [],
+        'label': 'prefix_hijacking',
+        'type': 'PH',
+        'duration_minutes': 720,
+        'impact': '300 Gbps DDoS with BGP manipulation'
+    },
+
+    # DOS/ROUTE LEAK - Additional
+    'facebook_outage_2021': {
+        'name': 'Facebook Global Outage',
+        'date': '2021-10-04',
+        'start_time': '15:39',
+        'end_time': '21:00',
+        'rrc': 'rrc04',
+        'malicious_as': ['32934'],
+        'hijacked_prefix': [],
+        'label': 'dos_attack',
+        'type': 'DoS',
+        'detection_rule': 'route_leak',
+        'duration_minutes': 321,
+        'impact': 'Facebook, Instagram, WhatsApp 6-hour global outage'
+    },
+
+    'microsoft_outage_2023': {
+        'name': 'Microsoft WAN Routing Issue',
+        'date': '2023-01-25',
+        'start_time': '07:00',
+        'end_time': '12:00',
+        'rrc': 'rrc04',
+        'malicious_as': ['8075'],
+        'hijacked_prefix': [],
+        'label': 'dos_attack',
+        'type': 'DoS',
+        'detection_rule': 'route_leak',
+        'duration_minutes': 300,
+        'impact': 'Azure, M365, Teams global outage'
+    },
+
+    'indosat_2014': {
+        'name': 'Indosat Massive Route Leak',
+        'date': '2014-04-02',
+        'start_time': '18:00',
+        'end_time': '22:00',
+        'rrc': 'rrc04',
+        'malicious_as': ['4761'],
+        'hijacked_prefix': [],
+        'label': 'dos_attack',
+        'type': 'DoS',
+        'detection_rule': 'route_leak',
+        'duration_minutes': 240,
+        'impact': '417,000 prefixes leaked globally'
+    },
+
+    'telekom_malaysia_2015': {
+        'name': 'Telekom Malaysia Route Leak',
+        'date': '2015-06-12',
+        'start_time': '08:43',
+        'end_time': '10:23',
+        'rrc': 'rrc04',
+        'malicious_as': ['4788'],
+        'hijacked_prefix': [],
+        'label': 'dos_attack',
+        'type': 'DoS',
+        'detection_rule': 'route_leak',
+        'duration_minutes': 100,
+        'impact': '179,000 prefixes leaked via Level3'
+    },
+
+    'aws_route53_leak_2021': {
+        'name': 'AWS Route 53 Route Leak',
+        'date': '2021-04-16',
+        'start_time': '08:00',
+        'end_time': '09:30',
+        'rrc': 'rrc04',
+        'malicious_as': ['16509'],
+        'hijacked_prefix': [],
+        'label': 'dos_attack',
+        'type': 'DoS',
+        'detection_rule': 'route_leak',
+        'duration_minutes': 90,
+        'impact': 'AWS DNS service disruption'
+    },
+
+    'centurylink_2018': {
+        'name': 'CenturyLink Nationwide Outage',
+        'date': '2018-12-27',
+        'start_time': '04:00',
+        'end_time': '20:00',
+        'rrc': 'rrc04',
+        'malicious_as': ['209'],
+        'hijacked_prefix': [],
+        'label': 'dos_attack',
+        'type': 'DoS',
+        'detection_rule': 'route_leak',
+        'duration_minutes': 960,
+        'impact': 'US-wide outage, 911 services affected'
+    },
+
+    'comcast_hijack_2014': {
+        'name': 'Comcast Route Leak',
+        'date': '2014-11-07',
+        'start_time': '11:00',
+        'end_time': '12:30',
+        'rrc': 'rrc04',
+        'malicious_as': ['7922'],
+        'hijacked_prefix': [],
+        'label': 'dos_attack',
+        'type': 'DoS',
+        'detection_rule': 'route_leak',
+        'duration_minutes': 90,
+        'impact': 'Major US traffic disruption'
+    },
+
+    # PATH MANIPULATION - Additional
+    'telia_centurylink_2019': {
+        'name': 'Telia-CenturyLink Route Leak',
+        'date': '2019-06-06',
+        'start_time': '10:00',
+        'end_time': '12:00',
+        'rrc': 'rrc04',
+        'malicious_as': ['1299', '3356'],
+        'hijacked_prefix': [],
+        'label': 'path_manipulation',
+        'type': 'PM',
+        'duration_minutes': 120,
+        'impact': 'Cloudflare, Discord, Reddit major disruption'
+    },
+
+    'sk_broadband_2016': {
+        'name': 'SK Broadband Routing Incident',
+        'date': '2016-11-03',
+        'start_time': '02:00',
+        'end_time': '08:00',
+        'rrc': 'rrc04',
+        'malicious_as': ['9318'],
+        'hijacked_prefix': [],
+        'label': 'path_manipulation',
+        'type': 'PM',
+        'duration_minutes': 360,
+        'impact': 'South Korea internet disruption'
+    },
+
+    'cogent_sprint_2008': {
+        'name': 'Cogent-Sprint Depeering',
+        'date': '2008-10-30',
+        'start_time': '00:00',
+        'end_time': '23:59',
+        'rrc': 'rrc04',
+        'malicious_as': ['174', '1239'],
+        'hijacked_prefix': [],
+        'label': 'path_manipulation',
+        'type': 'PM',
+        'duration_minutes': 1440,
+        'impact': 'Major tier-1 partition event'
+    },
+
+    'ntt_leak_2020': {
+        'name': 'NTT Communications Route Leak',
+        'date': '2020-06-16',
+        'start_time': '05:00',
+        'end_time': '07:00',
+        'rrc': 'rrc04',
+        'malicious_as': ['2914'],
+        'hijacked_prefix': [],
+        'label': 'path_manipulation',
+        'type': 'PM',
+        'duration_minutes': 120,
+        'impact': 'T-Mobile, Cloudflare service issues'
+    },
+
+    'qrator_2017': {
+        'name': 'Qrator Labs Detection - Route Hijack',
+        'date': '2017-08-29',
+        'start_time': '03:00',
+        'end_time': '05:00',
+        'rrc': 'rrc04',
+        'malicious_as': ['58879'],
+        'hijacked_prefix': [],
+        'label': 'path_manipulation',
+        'type': 'PM',
+        'duration_minutes': 120,
+        'impact': 'Traffic interception via AS path manipulation'
     },
 }
 
