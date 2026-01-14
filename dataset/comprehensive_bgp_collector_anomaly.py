@@ -766,6 +766,11 @@ def detect_anomaly(record, incident_config, incident_start, incident_end):
     """
     Detect if a BGP record matches the anomaly pattern for an incident.
 
+    UPDATED: More inclusive labeling during incident windows.
+    - High confidence: Direct involvement of malicious AS or hijacked prefix
+    - Medium confidence: Update during incident window with suspicious characteristics
+    - Low confidence: Any update during core incident window
+
     Returns: tuple (is_anomaly: bool, label: str, confidence: str)
     """
     try:
@@ -773,6 +778,7 @@ def detect_anomaly(record, incident_config, incident_start, incident_end):
     except Exception:
         return False, 'normal', 'N/A'
 
+    # Check if during incident window
     is_during_incident = incident_start <= record_time <= incident_end
     if not is_during_incident:
         return False, 'normal', 'N/A'
@@ -784,14 +790,24 @@ def detect_anomaly(record, incident_config, incident_start, incident_end):
     as_list = as_path_str.split() if as_path_str else []
     origin_as = record.get('Origin_AS', '') or (as_list[-1] if as_list else '')
     prefix = record.get('Prefix', '') or ''
+    entry_type = record.get('Entry_Type', '')
     malicious_as_list = incident_config.get('malicious_as', []) or []
     hijacked_prefixes = incident_config.get('hijacked_prefix', []) or []
 
+    # Calculate how far into the incident we are (for confidence scoring)
+    incident_duration = (incident_end - incident_start).total_seconds()
+    if incident_duration > 0:
+        time_into_incident = (record_time - incident_start).total_seconds()
+        # Core period = middle 60% of incident (typically most active)
+        is_core_period = 0.2 * incident_duration <= time_into_incident <= 0.8 * incident_duration
+    else:
+        is_core_period = True  # Short incidents: all is core
+
     # ----------------------------------------------------------------------
-    # PREFIX HIJACKING (PH): primary signal = Origin_AS + hijacked prefix
+    # PREFIX HIJACKING (PH)
     # ----------------------------------------------------------------------
     if incident_type == 'PH':
-        # prefix match (including sub/supernets)
+        # Check prefix match
         matches_prefix = False
         if hijacked_prefixes:
             matches_prefix = prefix_matches_hijacked(prefix, hijacked_prefixes)
@@ -799,85 +815,97 @@ def detect_anomaly(record, incident_config, incident_start, incident_end):
         involves_malicious_origin = origin_as in malicious_as_list if origin_as else False
         involves_malicious_in_path = any(mal_as in as_list for mal_as in malicious_as_list)
 
-        # High confidence: correct hijacked prefix AND malicious origin
-        if hijacked_prefixes:
-            if matches_prefix and involves_malicious_origin:
-                return True, label, 'high'
-            # Medium: either prefix matches or malicious AS appears (origin or path)
-            if matches_prefix or involves_malicious_origin or involves_malicious_in_path:
-                return True, label, 'medium'
-        else:
-            # Incidents without explicit prefix set: rely on malicious origin / path
-            if involves_malicious_origin:
-                return True, label, 'high'
-            if involves_malicious_in_path:
-                return True, label, 'medium'
+        # High confidence: exact match
+        if hijacked_prefixes and matches_prefix and involves_malicious_origin:
+            return True, label, 'high'
+
+        if involves_malicious_origin:
+            return True, label, 'high'
+
+        # Medium confidence: partial match
+        if matches_prefix or involves_malicious_in_path:
+            return True, label, 'medium'
+
+        # Low confidence: any announcement during incident (hijacks cause routing changes)
+        if entry_type == 'A' and is_core_period:
+            return True, label, 'low'
+
+        # Withdrawals during hijack are also suspicious
+        if entry_type == 'W' and is_core_period:
+            return True, label, 'low'
 
         return False, 'normal', 'N/A'
 
     # ----------------------------------------------------------------------
-    # PATH MANIPULATION (PM): primary signal = AS_Path content/shape
+    # PATH MANIPULATION (PM)
     # ----------------------------------------------------------------------
     if incident_type == 'PM':
         detection_rule = incident_config.get('detection_rule', '')
-        # Excessive prepending by a specific AS
+
+        # High confidence: excessive prepending
         if detection_rule == 'as_path_prepend_count' and as_list:
             prepend_threshold = incident_config.get('prepend_threshold', 10)
             for mal_as in malicious_as_list:
-                if not mal_as:
-                    continue
-                count = as_list.count(mal_as)
-                if count >= prepend_threshold:
+                if mal_as and as_list.count(mal_as) >= prepend_threshold:
                     return True, label, 'high'
 
-        # Generic route leak / manipulation in the incident window:
-        # malicious AS appears anywhere in the path
+        # High confidence: malicious AS in path
         for mal_as in malicious_as_list:
             if mal_as and mal_as in as_list:
-                return True, label, 'medium'
+                return True, label, 'high'
+
+        # Medium confidence: unusually long AS path during incident
+        if len(as_list) > 8:  # Typical AS path is 3-5 hops
+            return True, label, 'medium'
+
+        # Low confidence: any route change during manipulation window
+        if is_core_period:
+            return True, label, 'low'
 
         return False, 'normal', 'N/A'
 
     # ----------------------------------------------------------------------
-    # DoS / ROUTE LEAK (DoS): long paths, bursts, deaggregation, leak AS
+    # DoS / ROUTE LEAK (DoS)
     # ----------------------------------------------------------------------
     if incident_type == 'DoS':
         detection_rule = incident_config.get('detection_rule', '')
         path_len = len(as_list)
 
-        # Very long AS paths
+        # High confidence: very long AS paths
         if detection_rule == 'as_path_length':
             threshold = incident_config.get('path_length_threshold', 100)
             if path_len >= threshold:
                 return True, label, 'high'
-
-        # Worm / burst incidents: any update in window is anomalous
-        if detection_rule == 'update_burst':
-            return True, label, 'medium'
-
-        # Route leak incidents: presence of leak AS in AS_Path
-        if detection_rule == 'route_leak':
-            for mal_as in malicious_as_list:
-                if mal_as and mal_as in as_list:
-                    return True, label, 'medium'
-            # Even without explicit malicious_as, you may still want to flag all
-            # updates in the tight incident window as anomalous; keep medium:
-            if not malicious_as_list:
+            if path_len >= threshold // 2:
                 return True, label, 'medium'
 
-        # Deaggregation: very specific more‑specifics (e.g., many /24s)
+        # High confidence: malicious AS involvement
+        for mal_as in malicious_as_list:
+            if mal_as and mal_as in as_list:
+                return True, label, 'high'
+
+        # Route deaggregation: /24 or more specific
         if detection_rule == 'route_deaggregation' and prefix:
             try:
                 net = ipaddress.ip_network(prefix)
                 if net.prefixlen >= 24:
                     return True, label, 'high'
+                if net.prefixlen >= 22:
+                    return True, label, 'medium'
             except Exception:
                 pass
 
-        # Fallback: malicious AS appears in path during DoS/leak
-        for mal_as in malicious_as_list:
-            if mal_as and mal_as in as_list:
-                return True, label, 'high'
+        # Medium confidence: withdrawals during DoS (route instability)
+        if entry_type == 'W':
+            return True, label, 'medium'
+
+        # Route leak / burst: ALL updates during incident window are anomalous
+        if detection_rule in ['update_burst', 'route_leak']:
+            return True, label, 'medium'
+
+        # Low confidence: any update during core DoS period
+        if is_core_period:
+            return True, label, 'low'
 
         return False, 'normal', 'N/A'
 
