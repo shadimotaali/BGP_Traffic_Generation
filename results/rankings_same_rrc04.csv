@@ -1,0 +1,14 @@
+Method,Mean KS Statistic,Mean Wasserstein Distance,Weighted Wasserstein Distance,PCA Centroid Distance,Correlation Similarity (Pearson),Correlation Similarity (Spearman),Distribution Score (Weighted),Distribution Score (Unweighted),Correlation Score,Effect Size Score (Weighted),Effect Size Score (Unweighted),Wasserstein Score (Weighted),KS Excellent Features,KS Good or Better Features,Negligible Effect Features,Average Rank
+SMOTE_kmeans,1.0,1.0,1.0,1.0,1.0,1.0,2.0,2.0,1.0,3.0,3.0,1.0,1.0,2.0,3.0,1.6
+SMOTE_adasyn,2.5,2.0,2.0,5.0,2.0,2.0,2.0,2.0,2.0,3.0,3.0,2.0,2.5,2.0,3.0,2.466666666666667
+SMOTE_normal,2.5,3.0,3.0,4.0,3.0,3.0,2.0,2.0,3.0,3.0,3.0,3.0,2.5,2.0,3.0,2.8
+GAN_DoppelGanger_enhanced,6.0,4.0,4.0,6.0,4.0,4.0,5.0,5.0,4.0,3.0,3.0,4.0,9.5,5.0,3.0,4.633333333333334
+GAN_LSTM_enhanced,7.0,5.0,5.0,3.0,5.0,5.0,7.0,7.0,5.0,6.0,6.0,5.0,5.0,7.0,6.0,5.6
+SMOTE_borderline,5.0,7.0,7.0,7.0,7.0,8.0,6.0,6.0,7.0,7.0,7.0,7.0,4.0,6.0,7.0,6.533333333333333
+GAN_TimeGAN_default,8.0,9.0,9.0,2.0,8.0,6.0,8.0,8.0,8.0,3.0,3.0,9.0,9.5,8.0,3.0,6.766666666666667
+Copula,4.0,8.0,8.0,9.0,9.0,9.0,4.0,4.0,9.0,9.0,9.0,8.0,7.0,4.0,10.5,7.433333333333334
+GAN_DoppelGanger_default,9.0,6.0,6.0,8.0,6.0,7.0,9.0,9.0,6.0,8.0,8.0,6.0,7.0,9.0,8.0,7.466666666666667
+Hybrid_SMOTE_GAN,10.0,10.0,10.0,11.0,12.0,12.0,10.0,10.0,12.0,11.0,11.0,10.0,7.0,10.0,9.0,10.333333333333334
+GAN_TimeGAN_enhanced,11.0,12.0,12.0,10.0,10.0,10.0,12.5,12.5,10.0,10.0,10.0,12.0,12.5,12.5,10.5,11.166666666666666
+SCAPY,13.0,11.0,11.0,13.0,11.0,11.0,12.5,12.5,11.0,13.0,13.0,11.0,12.5,12.5,13.0,12.066666666666666
+GAN_LSTM_default,12.0,13.0,13.0,12.0,13.0,13.0,11.0,11.0,13.0,12.0,12.0,13.0,11.0,11.0,12.0,12.133333333333333

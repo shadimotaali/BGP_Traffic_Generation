@@ -1,0 +1,14 @@
+Method,Synthetic Samples,Real Samples,Valid Features Compared,Constant in Both (Excluded),Constant in Synthetic Only (GAN Issue),Constant in Real Only,KS Excellent Features,KS Good or Better Features,Mean KS Statistic,Mean Wasserstein Distance,Weighted Wasserstein Distance,Correlation Similarity (Pearson),Correlation Similarity (Spearman),PCA Centroid Distance,Negligible Effect Features,Small Effect Features,Medium Effect Features,Large Effect Features,Distribution Score (Weighted),Distribution Score (Unweighted),Correlation Score,Effect Size Score (Weighted),Effect Size Score (Unweighted),Wasserstein Score (Weighted),Multivariate (PCA) Score,Overall Similarity Score (WEIGHTED),Overall Similarity Score (UNWEIGHTED),Weighting Impact
+SCAPY,20382.0,20382.0,27.0,0.0,0.0,0.0,0.0,0.0,0.7598,0.3629,0.3671,0.4844,0.4241,5.2907,0.0,0.0,4.0,23.0,0.0,0.0,74.2,3.9,3.7,26.6,0.0,19.8,19.9,-0.1 points
+GAN_LSTM_default,60000.0,60000.0,25.0,0.0,2.0,0.0,0.0,1.0,0.701,0.5176,0.517,0.2494,0.2387,4.3492,5.0,5.0,3.0,12.0,3.8,4.0,62.5,36.6,38.0,0.0,0.0,22.4,22.8,-0.4 points
+GAN_TimeGAN_default,60000.0,60000.0,27.0,0.0,0.0,0.0,0.0,0.0,0.5449,0.2283,0.2306,0.6658,0.5532,4.3027,2.0,2.0,7.0,16.0,0.0,0.0,83.3,20.3,19.4,53.9,0.0,29.8,29.7,+0.1 points
+GAN_DoppelGanger_default,60000.0,60000.0,27.0,0.0,0.0,0.0,0.0,0.0,0.6225,0.2214,0.2197,0.7333,0.5203,4.4453,0.0,6.0,5.0,16.0,0.0,0.0,86.7,22.9,21.3,56.1,0.0,31.5,31.0,+0.5 points
+GAN_LSTM_enhanced,60000.0,60000.0,27.0,0.0,0.0,0.0,0.0,0.0,0.5327,0.1877,0.1874,0.7236,0.5356,4.1466,1.0,8.0,2.0,16.0,0.0,0.0,86.2,29.9,27.8,62.5,0.0,34.1,33.5,+0.5 points
+GAN_TimeGAN_enhanced,60000.0,60000.0,26.0,0.0,1.0,0.0,0.0,0.0,0.7019,0.4652,0.4627,0.5222,0.2823,4.8903,2.0,2.0,5.0,17.0,0.0,0.0,76.1,19.2,18.3,7.5,0.0,21.2,20.8,+0.3 points
+GAN_DoppelGanger_enhanced,60000.0,60000.0,27.0,0.0,0.0,0.0,0.0,0.0,0.5671,0.1887,0.1856,0.7376,0.5458,4.2529,1.0,9.0,2.0,15.0,0.0,0.0,86.9,32.5,30.6,62.9,0.0,34.9,34.4,+0.6 points
+SMOTE_normal,20000.0,20000.0,27.0,0.0,0.0,0.0,0.0,0.0,0.5751,0.1947,0.1966,0.7819,0.5945,4.3691,1.0,6.0,5.0,15.0,0.0,0.0,89.1,26.4,25.0,60.7,0.0,33.5,33.2,+0.3 points
+SMOTE_borderline,20000.0,20000.0,27.0,0.0,0.0,0.0,0.0,0.0,0.5964,0.2189,0.2201,0.73,0.5034,4.5003,1.0,5.0,5.0,16.0,0.0,0.0,86.5,22.9,22.2,56.0,0.0,31.4,31.3,+0.1 points
+SMOTE_kmeans,19994.0,19994.0,27.0,0.0,0.0,0.0,0.0,0.0,0.5602,0.1845,0.1822,0.7895,0.5938,4.2495,1.0,6.0,5.0,15.0,0.0,0.0,89.5,26.4,25.0,63.6,0.0,34.0,33.6,+0.4 points
+SMOTE_adasyn,20178.0,20178.0,27.0,0.0,0.0,0.0,0.0,0.0,0.577,0.1951,0.197,0.7821,0.5941,4.371,1.0,4.0,7.0,15.0,0.0,0.0,89.1,22.0,21.3,60.6,0.0,32.4,32.3,+0.1 points
+Hybrid_SMOTE_GAN,20000.0,20000.0,27.0,0.0,0.0,0.0,0.0,0.0,0.4503,0.2608,0.2574,0.3635,0.2103,3.0302,9.0,7.0,3.0,8.0,0.0,0.0,68.2,58.1,55.6,48.5,0.0,35.4,34.7,+0.7 points
+Copula,60000.0,60000.0,27.0,0.0,0.0,0.0,0.0,0.0,0.4903,0.2566,0.2539,0.7771,0.6487,2.6858,9.0,8.0,6.0,4.0,0.0,0.0,88.9,63.3,61.1,49.2,10.5,43.1,42.4,+0.6 points
