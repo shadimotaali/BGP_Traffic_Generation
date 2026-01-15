@@ -517,7 +517,7 @@ def detect_anomaly(record, incident_config, incident_start, incident_end):
     Returns: tuple (is_anomaly: bool, label: str, confidence: str)
     """
     try:
-        record_time = datetime.strptime(record['Time'], '%Y-%m-%d %H:%M:%S')
+        record_time = datetime.strptime(record['Timestamp'], '%Y-%m-%d %H:%M:%S')
     except Exception:
         return False, 'normal', 'N/A'
 
@@ -530,7 +530,8 @@ def detect_anomaly(record, incident_config, incident_start, incident_end):
 
     as_path_str = record.get('AS_Path', '') or ''
     as_list = as_path_str.split() if as_path_str else []
-    origin_as = record.get('Origin_AS', '') or (as_list[-1] if as_list else '')
+    # Use Origin_ASN (originating AS) for anomaly detection
+    origin_as = record.get('Origin_ASN', '') or (as_list[-1] if as_list else '')
     prefix = record.get('Prefix', '') or ''
     malicious_as_list = incident_config.get('malicious_as', []) or []
     hijacked_prefixes = incident_config.get('hijacked_prefix', []) or []
@@ -660,80 +661,94 @@ def decompress_gz(gz_file, output_file):
 
 
 def parse_bgpdump_line(line):
-    """Parse a single line from bgpdump -m output."""
+    """
+    Parse a single line from bgpdump -m output.
+
+    bgpdump -m format:
+    BGP4MP|timestamp|A|peer_ip|peer_as|prefix|as_path|ORIGIN|next_hop|local_pref|med|community|atomic_agg|aggregator
+    BGP4MP|timestamp|W|peer_ip|peer_as|prefix
+
+    ORIGIN field (index 7) contains: IGP, EGP, or INCOMPLETE
+    """
     line = line.strip()
     if not line:
         return None
-    
+
     parts = line.split('|')
-    
+
     if len(parts) < 6:
         return None
-    
+
     try:
         msg_type = parts[0]
         if msg_type != 'BGP4MP':
             return None
-        
+
         timestamp = int(parts[1])
         dt = datetime.utcfromtimestamp(timestamp)
         date_time = dt.strftime('%Y-%m-%d %H:%M:%S')
-        
+
         update_type = parts[2]
         peer_ip = parts[3]
         peer_as = parts[4]
         prefix = parts[5]
-        
+
         if update_type == 'W':
             return {
                 'MRT_Type': 'BGP4MP',
-                'Time': date_time,
-                'Entry_Type': 'W',
+                'Timestamp': date_time,
+                'Subtype': 'WITHDRAW',
                 'Peer_IP': peer_ip,
-                'Peer_AS': peer_as,
+                'Peer_ASN': peer_as,
                 'Prefix': prefix,
                 'AS_Path': '',
-                'Origin_AS': '',
+                'Origin': '',           # BGP Origin attribute (IGP/EGP/INCOMPLETE)
+                'Origin_ASN': '',       # Last AS in path (originating AS)
                 'Next_Hop': '',
                 'Local_Pref': '',
                 'MED': '',
-                'Community': '',
+                'Communities': '',
                 'Atomic_Aggregate': '',
                 'Aggregator': ''
             }
-        
+
         as_path = parts[6] if len(parts) > 6 else ''
-        origin = parts[7] if len(parts) > 7 else ''
+        origin_attr = parts[7] if len(parts) > 7 else ''  # BGP Origin: IGP/EGP/INCOMPLETE
         next_hop = parts[8] if len(parts) > 8 else ''
         local_pref = parts[9] if len(parts) > 9 else ''
         med = parts[10] if len(parts) > 10 else ''
         community = parts[11] if len(parts) > 11 else ''
         atomic_agg = parts[12] if len(parts) > 12 else ''
         aggregator = parts[13] if len(parts) > 13 else ''
-        
-        origin_as = ''
+
+        # Extract originating AS (last AS in path)
+        origin_asn = ''
         if as_path:
             as_list = as_path.strip().split()
             if as_list:
-                origin_as = as_list[-1]
-        
+                # Handle AS_SET by taking the last element outside braces
+                last_as = as_list[-1].strip('{}')
+                if last_as.isdigit():
+                    origin_asn = last_as
+
         return {
             'MRT_Type': 'BGP4MP',
-            'Time': date_time,
-            'Entry_Type': 'A',
+            'Timestamp': date_time,
+            'Subtype': 'ANNOUNCE',
             'Peer_IP': peer_ip,
-            'Peer_AS': peer_as,
+            'Peer_ASN': peer_as,
             'Prefix': prefix,
             'AS_Path': as_path,
-            'Origin_AS': origin_as,
+            'Origin': origin_attr,      # BGP Origin attribute (IGP/EGP/INCOMPLETE)
+            'Origin_ASN': origin_asn,   # Last AS in path (originating AS)
             'Next_Hop': next_hop,
             'Local_Pref': local_pref,
             'MED': med,
-            'Community': community,
+            'Communities': community,
             'Atomic_Aggregate': atomic_agg,
             'Aggregator': aggregator
         }
-    
+
     except (ValueError, IndexError):
         return None
 
@@ -893,9 +908,9 @@ def collect_incident_data(incident_key, incident_config):
     print(f"\nWriting CSV: {csv_output}")
     
     if labeled_records:
-        fieldnames = ['MRT_Type', 'Time', 'Entry_Type', 'Peer_IP', 'Peer_AS',
-                     'Prefix', 'AS_Path', 'Origin_AS', 'Next_Hop', 'Local_Pref',
-                     'MED', 'Community', 'Atomic_Aggregate', 'Aggregator', 
+        fieldnames = ['MRT_Type', 'Timestamp', 'Subtype', 'Peer_IP', 'Peer_ASN',
+                     'Prefix', 'AS_Path', 'Origin', 'Origin_ASN', 'Next_Hop', 'Local_Pref',
+                     'MED', 'Communities', 'Atomic_Aggregate', 'Aggregator',
                      'Label', 'Confidence', 'Incident']
         
         try:
@@ -921,9 +936,11 @@ def collect_incident_data(incident_key, incident_config):
             anomaly_sample = next((r for r in labeled_records if r['Label'] != 'normal'), None)
             if anomaly_sample:
                 print(f"\nSample Anomaly ({incident_config['label']}):")
-                print(f"  Time: {anomaly_sample['Time']}")
+                print(f"  Timestamp: {anomaly_sample['Timestamp']}")
                 print(f"  Prefix: {anomaly_sample['Prefix']}")
                 print(f"  AS_Path: {anomaly_sample['AS_Path']}")
+                print(f"  Origin: {anomaly_sample['Origin']}")
+                print(f"  Origin_ASN: {anomaly_sample['Origin_ASN']}")
                 print(f"  Confidence: {anomaly_sample['Confidence']}")
         
         except Exception as e:

@@ -63,6 +63,8 @@ def parse_bgpdump_line(line):
     Format for withdrawals:
     BGP4MP|timestamp|W|peer_ip|peer_as|prefix
 
+    ORIGIN field (index 7) contains: IGP, EGP, or INCOMPLETE
+
     Returns a record dictionary or None if line is invalid.
     """
     line = line.strip()
@@ -93,17 +95,18 @@ def parse_bgpdump_line(line):
         if update_type == 'W':
             return {
                 'MRT_Type': 'BGP4MP',
-                'Time': date_time,
-                'Entry_Type': 'W',
+                'Timestamp': date_time,
+                'Subtype': 'WITHDRAW',
                 'Peer_IP': peer_ip,
-                'Peer_AS': peer_as,
+                'Peer_ASN': peer_as,
                 'Prefix': prefix,
                 'AS_Path': '',
-                'Origin_AS': '',
+                'Origin': '',           # BGP Origin attribute (IGP/EGP/INCOMPLETE)
+                'Origin_ASN': '',       # Last AS in path (originating AS)
                 'Next_Hop': '',
                 'Local_Pref': '',
                 'MED': '',
-                'Community': '',
+                'Communities': '',
                 'Atomic_Aggregate': '',
                 'Aggregator': '',
                 'Label': 'normal'
@@ -111,7 +114,7 @@ def parse_bgpdump_line(line):
 
         # For announcements, parse additional fields
         as_path = parts[6] if len(parts) > 6 else ''
-        origin = parts[7] if len(parts) > 7 else ''
+        origin_attr = parts[7] if len(parts) > 7 else ''  # BGP Origin: IGP/EGP/INCOMPLETE
         next_hop = parts[8] if len(parts) > 8 else ''
         local_pref = parts[9] if len(parts) > 9 else ''
         med = parts[10] if len(parts) > 10 else ''
@@ -119,26 +122,29 @@ def parse_bgpdump_line(line):
         atomic_agg = parts[12] if len(parts) > 12 else ''
         aggregator = parts[13] if len(parts) > 13 else ''
 
-        # Extract origin AS from AS_PATH
-        origin_as = ''
+        # Extract originating AS (last AS in path)
+        origin_asn = ''
         if as_path:
             as_list = as_path.strip().split()
             if as_list:
-                origin_as = as_list[-1]
+                last_as = as_list[-1].strip('{}')
+                if last_as.isdigit():
+                    origin_asn = last_as
 
         return {
             'MRT_Type': 'BGP4MP',
-            'Time': date_time,
-            'Entry_Type': 'A',
+            'Timestamp': date_time,
+            'Subtype': 'ANNOUNCE',
             'Peer_IP': peer_ip,
-            'Peer_AS': peer_as,
+            'Peer_ASN': peer_as,
             'Prefix': prefix,
             'AS_Path': as_path,
-            'Origin_AS': origin_as,
+            'Origin': origin_attr,      # BGP Origin attribute (IGP/EGP/INCOMPLETE)
+            'Origin_ASN': origin_asn,   # Last AS in path (originating AS)
             'Next_Hop': next_hop,
             'Local_Pref': local_pref,
             'MED': med,
-            'Community': community,
+            'Communities': community,
             'Atomic_Aggregate': atomic_agg,
             'Aggregator': aggregator,
             'Label': 'normal'
@@ -272,9 +278,9 @@ def collect_and_process_updates():
     print("=" * 70)
 
     if all_records:
-        fieldnames = ['MRT_Type', 'Time', 'Entry_Type', 'Peer_IP', 'Peer_AS',
-                     'Prefix', 'AS_Path', 'Origin_AS', 'Next_Hop', 'Local_Pref',
-                     'MED', 'Community', 'Atomic_Aggregate', 'Aggregator', 'Label']
+        fieldnames = ['MRT_Type', 'Timestamp', 'Subtype', 'Peer_IP', 'Peer_ASN',
+                     'Prefix', 'AS_Path', 'Origin', 'Origin_ASN', 'Next_Hop', 'Local_Pref',
+                     'MED', 'Communities', 'Atomic_Aggregate', 'Aggregator', 'Label']
 
         try:
             with open(CSV_OUTPUT, 'w', newline='', encoding='utf-8') as csvfile:
@@ -286,11 +292,11 @@ def collect_and_process_updates():
             print(f"✓ Total records: {len(all_records):,}")
 
             # Show statistics
-            announcements = sum(1 for r in all_records if r['Entry_Type'] == 'A')
-            withdrawals = sum(1 for r in all_records if r['Entry_Type'] == 'W')
-            with_origin = sum(1 for r in all_records if r.get('Origin_AS'))
+            announcements = sum(1 for r in all_records if r['Subtype'] == 'ANNOUNCE')
+            withdrawals = sum(1 for r in all_records if r['Subtype'] == 'WITHDRAW')
+            with_origin = sum(1 for r in all_records if r.get('Origin'))
             with_med = sum(1 for r in all_records if r.get('MED'))
-            with_community = sum(1 for r in all_records if r.get('Community'))
+            with_community = sum(1 for r in all_records if r.get('Communities'))
 
             print(f"\nStatistics:")
             print(f"  Announcements: {announcements:,}")
@@ -302,7 +308,7 @@ def collect_and_process_updates():
             # Show sample records
             if announcements > 0:
                 print(f"\nSample announcement:")
-                sample_a = next((r for r in all_records if r['Entry_Type'] == 'A'), None)
+                sample_a = next((r for r in all_records if r['Subtype'] == 'ANNOUNCE'), None)
                 if sample_a:
                     for key, value in sample_a.items():
                         if value:
